@@ -19,7 +19,7 @@ public class KeyValueStore {
 		try {
 
 			// Invoke me as <http://localhost:8080/RPC2>.
-			WebServer server = new WebServer(8090);
+			WebServer server = new WebServer(3389);
 			server.addHandler("sample", new KeyValueStore());
 
 		} catch (Exception exception) {
@@ -102,53 +102,7 @@ public class KeyValueStore {
 		return hashMap;
 	}
 
-	//	public String writeHashMapToFile(String folderName ,String fileName ,String value) throws IOException {
-	//		
-	//		 File file = new File(folderName+"\\"+fileName);
-	//		 boolean exists = file.exists();
-	//		 if (!exists) {
-	//	         try {
-	//	        	 file.createNewFile();
-	//			} catch (IOException e) {
-	//				// TODO Auto-generated catch block
-	//				 System.out.println("Could'nt create new file");
-	//			}
-	//	     }
-	//		 
-	//		 BufferedWriter bw = new BufferedWriter(new FileWriter(folderName+"\\"+fileName, false));
-	//
-	//				try {
-	//					
-	//					bw.write(value);
-	//				} catch (IOException e) {
-	//					System.out.println("Couldn't write to file ");
-	//				}
-	//		
-	//
-	//			bw.close();
-	//		 
-	////		Map<String, String> data = new LinkedHashMap<String, String>();
-	////       data.put(fileName, value);
-	////       BufferedWriter bw = new BufferedWriter(new FileWriter(folderName+"\\"+fileName, false));
-	////       data.forEach((k, v) -> {
-	////           try {
-	////                  	
-	////           	
-	////               bw.write(k + "," + v+"\n");
-	////           } catch (IOException e) {
-	////              System.out.println("Couldn't write to file ");
-	////           }
-	////       });
-	////
-	////       bw.close();
-	//		
-	////		if(getValueFromData(keyId).equals("NOT FOUND"))
-	////			return "NOT-STORED\r\n";
-	////		else
-	////			return "STORED\\r\\n";
-	//		
-	//		return "Done";
-	//	}
+	
 
 	public String writeDataToFile(String folderName ,String fileName ,String value) throws IOException {
 
