@@ -9,6 +9,8 @@ import java.io.*;
 
 import java.util.*;
 
+import org.apache.log4j.Logger;
+
 import helma.xmlrpc.WebServer;
 
 import java.net.*; 
@@ -17,6 +19,9 @@ public class MasterServer
 { 
 	int num_of_map;
 	int num_of_red;
+	
+	 static Logger log = Logger.getLogger(MasterServer.class.getName());
+	  
 	public static void main (String [] args) {
 		try {
 
@@ -29,7 +34,7 @@ public class MasterServer
 		}
 	}
 
-	public String run_mapred(String input_data, String map_fn, String reduce_fn, String output_location) throws IOException {
+	public String run_mapred(String input_data, String map_fn, String reduce_fn, String output_location) throws Exception {
 
 
 
@@ -47,20 +52,22 @@ public class MasterServer
 		String fileName = input_data;
 		String MapperInputFolder = props.getProperty("MapperInputFolder");
 		String IntermediateInputFolder = props.getProperty("IntermediateInputFolder");
-		String ReducerInput = output_location;
+		String ReducerInput = props.getProperty("ReducerInputFolder");
+		String mapperStartupScript="mapper.sh";
+		String reducerStartupScript="reducer.sh";
 
 
 		ServerSocket ss = new ServerSocket(Integer.parseInt(MasterPort));
 
-		System.out.println("Application Started");
+		log.debug("Application Started");
 		if(type == 0) {
 
-			System.out.println(mapNum+" Mappers started");
-			System.out.println();
+			log.debug(mapNum+" Mappers started");
+			log.debug("");
 			String MapperIp=null;
 			for(int i=0;i<mapNum ;i++) {
-				ComputeEngineSample.createInstance("mapper"+mapNum);
-				MapperIp = ComputeEngineSample.getIP("mapper"+mapNum);
+				ComputeEngineSample.createInstance("mapper"+i,mapperStartupScript);
+				MapperIp = ComputeEngineSample.getIP("mapper"+i);
 				Thread th = new CreateMapper(mapNum,MapperIp);
 				th.start();
 			}
@@ -68,17 +75,17 @@ public class MasterServer
 
 
 			DataFile data = new DataFile();
-			System.out.println("File Reading in Progress!!");
+			log.debug("File Reading in Progress!!");
 			String text = data.readBook(fileName);
 
 
-			System.out.println("File is divided into chunks as described in report");
-			System.out.println();
+			log.debug("File is divided into chunks as described in report");
+			log.debug("");
 			List<String> bookParts = data.divideBook(MapperInputFolder,text,mapNum,type);
 
 			int count = 0;
-			System.out.println("Data is transfered to individual mappers parallelly");
-			System.out.println();
+			log.debug("Data is transfered to individual mappers parallelly");
+			log.debug("");
 			sendData(count, mapNum,bookParts,ss, type);
 
 			try {
@@ -93,8 +100,9 @@ public class MasterServer
 			List<Integer> fault = FaultCheck.checkMapperStatus(part);
 
 			if(fault.size()!=0) {
-				System.out.println("Mappers Failed :"+fault.size());
-
+				log.debug("Mappers Failed :"+fault.size());
+				ComputeEngineSample.createInstance("mapper"+mapNum,mapperStartupScript);
+				MapperIp = ComputeEngineSample.getIP("mapper"+mapNum);
 				Thread t = new CreateMapper(fault.size(),MapperIp);
 				t.start();
 				List<String> leftData = new ArrayList();
@@ -103,24 +111,27 @@ public class MasterServer
 				}
 
 				sendData(count, fault.size(),leftData,ss, type);
-				System.out.println("Mapper recovered");
+				log.debug("Mapper recovered");
 			}
-			System.out.println();
-			System.out.println("Mappers Completed");
-			System.out.println();
+			log.debug("");
+			log.debug("Mappers Completed");
+			log.debug("");
+			
+			log.debug("Deleting instances");
+			ComputeEngineSample.deleteInstances("mapper");
 
-
-			System.out.println("Combiner function called to process the data from Mapper and produce the input files for Reducer");
-			System.out.println("");
+			log.debug("Combiner function called to process the data from Mapper and produce the input files for Reducer");
+			log.debug("");
 			List<String> RedInputFiles = new ArrayList<String>();
 			RedInputFiles =Intermediator.callIntermediateFunction(mapNum,redNum, type,IntermediateInputFolder,ReducerInput);
 
-			System.out.println(redNum+" Reducers started");
-			System.out.println();
+			log.debug(redNum+" Reducers started");
+			log.debug("");
 
 			String ReducerIp=null;
 			for(int i=0;i<mapNum ;i++) {
-				ComputeEngineSample.createInstance("reducer"+mapNum);
+				
+				ComputeEngineSample.createInstance("reducer"+mapNum,mapperStartupScript);
 				ReducerIp = ComputeEngineSample.getIP("reducer"+mapNum);
 				Thread tr = new CreateReducer(redNum,ReducerIp);
 				tr.start();
@@ -128,8 +139,8 @@ public class MasterServer
 			
 			
 			count = 0;
-			System.out.println("Data is transfered to individual Reducers parallelly");
-			System.out.println();
+			log.debug("Data is transfered to individual Reducers parallelly");
+			log.debug("");
 			sendData(count, redNum,RedInputFiles,ss, type);
 
 			try {
@@ -143,7 +154,7 @@ public class MasterServer
 			List<Integer> result = FaultCheck.checkMapperStatus(part);
 			if(result.size()!=0) {
 
-				System.out.println("Reducers Failed :"+result.size());
+				log.debug("Reducers Failed :"+result.size());
 				Thread rt = new CreateReducer(result.size(),ReducerIp);
 				rt.start();
 				List<String> leftData = new ArrayList();
@@ -153,41 +164,45 @@ public class MasterServer
 
 
 				sendData(count, result.size(),RedInputFiles,ss, type);
-				System.out.println("Reducers recovered");
-				System.out.println();
+				log.debug("Reducers recovered");
+				log.debug("");
+				log.debug("Deleting instances");
+				ComputeEngineSample.deleteInstances("reducer");
 				return "Done";
 				//return true;
 			}else {
-				System.out.println();
-				System.out.println("Reducers Completed");
-				System.out.println();
+				log.debug("");
+				log.debug("Reducers Completed");
+				log.debug("Deleting instances");
+				ComputeEngineSample.deleteInstances("reducer");
+				log.debug("");
 				return "Done";
 				//return false;
+				
+				
 			}
-
-			//////////////////////////////////////////////////////////////////////////////////////////////////////
-		}else {
+	}else {
 			DataFile data = new DataFile();
 			//String text = data.readBook(type);
-			System.out.println("File Reading in Process!!");
-			System.out.println();
+			log.debug("File Reading in Process!!");
+			log.debug("");
 			List<String> bookParts = data.divideBook(MapperInputFolder,indexFiles,mapNum,type);
 
 			int count = 0;
 
 			//  Create mappers
-			System.out.println(bookParts.size()+" Mappers started");
-			System.out.println();
+			log.debug(bookParts.size()+" Mappers started");
+			log.debug("");
 			String MapperIp=null;
 			for(int i=0;i<mapNum ;i++) {
-				ComputeEngineSample.createInstance("mapper"+mapNum);
+				ComputeEngineSample.createInstance("mapper"+mapNum,reducerStartupScript);
 				MapperIp = ComputeEngineSample.getIP("mapper"+mapNum);
 				Thread th = new CreateMapper(mapNum,MapperIp);
 				th.start();
 			}
 
-			System.out.println("File is divided into chunks as described in report");
-			System.out.println();
+			log.debug("File is divided into chunks as described in report");
+			log.debug("");
 			sendData(count, mapNum,bookParts,ss, type);
 
 			try {
@@ -202,7 +217,7 @@ public class MasterServer
 
 			if(fault.size()!=0) {
 				//class fault size mapper
-				System.out.println("Mappers Failed are"+fault.size());
+				log.debug("Mappers Failed are"+fault.size());
 
 				Thread t = new CreateMapper(fault.size(),MapperIp);
 				t.start();
@@ -211,29 +226,31 @@ public class MasterServer
 					leftData.add(bookParts.get(i));
 				}
 				sendData(count, fault.size(),leftData,ss, type);
-				System.out.println("Mapper recovered");
+				log.debug("Mapper recovered");
 			}
-			System.out.println("Mappers Completed");
-			System.out.println();
-
-			System.out.println("Combiner function called to process the data from Mapper and produce the input files for Reducer");
-			System.out.println("");
+			log.debug("Mappers Completed");
+			log.debug("");
+			log.debug("Deleting instances");
+			ComputeEngineSample.deleteInstances("mapper");
+			
+			log.debug("Combiner function called to process the data from Mapper and produce the input files for Reducer");
+			log.debug("");
 			List<String> RedInputFiles = new ArrayList<String>();
 			RedInputFiles =Intermediator.callIntermediateFunction(bookParts.size(),redNum, type, IntermediateInputFolder,ReducerInput);
 
-			System.out.println(redNum+" Reducers started");
-			System.out.println();
+			log.debug(redNum+" Reducers started");
+			log.debug("");
 			
 			String ReducerIp=null;
 			for(int i=0;i<mapNum ;i++) {
-				ComputeEngineSample.createInstance("reducer"+mapNum);
+				ComputeEngineSample.createInstance("reducer"+mapNum,reducerStartupScript);
 				ReducerIp = ComputeEngineSample.getIP("reducer"+mapNum);
 				Thread tr = new CreateReducer(redNum,ReducerIp);
 				tr.start();
 			}
 			int count1 =0;
-			System.out.println("Data is transfered to individual Reducers parallelly");
-			System.out.println();
+			log.debug("Data is transfered to individual Reducers parallelly");
+			log.debug("");
 			sendData(count, redNum,RedInputFiles,ss, type);
 
 			try {
@@ -245,9 +262,9 @@ public class MasterServer
 			String part2 = "Reducer";
 			List<Integer> faults = FaultCheck.checkMapperStatus(part);
 			if(faults.size()!=0) {
-				System.out.println("Reducers Failed are"+faults.size());
-				System.out.println("Fault Tolerance feature on");
-				System.out.println();
+				log.debug("Reducers Failed are"+faults.size());
+				log.debug("Fault Tolerance feature on");
+				log.debug("");
 
 				Thread rt = new CreateReducer(faults.size(),ReducerIp);
 				rt.start();
@@ -256,12 +273,16 @@ public class MasterServer
 					leftData.add(RedInputFiles.get(i));
 				}
 				sendData(count, faults.size(),RedInputFiles,ss, type);
-				System.out.println("Reducers recovered");
-				System.out.println();
+				log.debug("Reducers recovered");
+				log.debug("");
+				log.debug("Deleting instances");
+				ComputeEngineSample.deleteInstances("reducer");
 				return "Done";
 				//return true;
 			}else {
-				System.out.println("Reducers Completed");
+				log.debug("Reducers Completed");
+				log.debug("Deleting instances");
+				ComputeEngineSample.deleteInstances("reducer");
 				return "Done";
 				//return false;
 			}
@@ -296,7 +317,7 @@ public class MasterServer
 			{ 
 				s = ss.accept(); 
 
-				System.out.println("New client connected : " + s); 
+				log.debug("New client connected : " + s); 
 
 				DataInputStream dis = new DataInputStream(s.getInputStream()); 
 				DataOutputStream dos = new DataOutputStream(s.getOutputStream());

@@ -23,7 +23,8 @@ public class CreateMapper extends Thread{
 				XmlRpcClient server = new XmlRpcClient(server_url);
 				
 				Vector params = new Vector();
-				params.addElement(new String("Mapper"));
+				String master = ComputeEngineSample.getIP("master");
+				params.addElement(new String(master));
 				server.execute("sample.clientMain", params);
 				
 

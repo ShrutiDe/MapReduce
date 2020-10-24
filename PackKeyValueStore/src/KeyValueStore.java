@@ -2,6 +2,7 @@
 import java.io.BufferedReader;
 
 
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -11,14 +12,16 @@ import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
+
 import helma.xmlrpc.WebServer;
-
+import org.apache.log4j.Logger;
 public class KeyValueStore {
-
+	 static Logger log = Logger.getLogger(KeyValueStore.class.getName());
 	public static void main (String[] args) {
 		try {
-
-			// Invoke me as <http://localhost:8080/RPC2>.
+			 log.debug("KeyValueStore started with IP"+"34.122.223.204");
+			  
 			WebServer server = new WebServer(3389);
 			server.addHandler("sample", new KeyValueStore());
 
@@ -30,7 +33,7 @@ public class KeyValueStore {
 
 	public String getValueFromData(String filePath ,String key) throws FileNotFoundException {
 		// TODO Auto-generated method stub
-
+		 log.debug("Fetching Data");
 		BufferedReader br = null;
 		try {
 			br = new BufferedReader(new FileReader(filePath+"\\"+key));
@@ -52,7 +55,7 @@ public class KeyValueStore {
 	
 	public String getValueForInter(String filePath ,String key) throws FileNotFoundException {
 		// TODO Auto-generated method stub
-
+		 log.debug("Fetching Data for combiner");
 		BufferedReader br = null;
 		try {
 			br = new BufferedReader(new FileReader(filePath+"\\"+key));
@@ -73,7 +76,7 @@ public class KeyValueStore {
 
 	public LinkedHashMap<String, String> readDataFromFile(String fileName) throws FileNotFoundException {
 
-
+		 log.debug("Reading data from file");
 		LinkedHashMap<String, String> hashMap = new LinkedHashMap<String, String>();
 		File file = new File(fileName);
 		boolean exists = file.exists();
@@ -102,56 +105,9 @@ public class KeyValueStore {
 		return hashMap;
 	}
 
-	//	public String writeHashMapToFile(String folderName ,String fileName ,String value) throws IOException {
-	//		
-	//		 File file = new File(folderName+"\\"+fileName);
-	//		 boolean exists = file.exists();
-	//		 if (!exists) {
-	//	         try {
-	//	        	 file.createNewFile();
-	//			} catch (IOException e) {
-	//				// TODO Auto-generated catch block
-	//				 System.out.println("Could'nt create new file");
-	//			}
-	//	     }
-	//		 
-	//		 BufferedWriter bw = new BufferedWriter(new FileWriter(folderName+"\\"+fileName, false));
-	//
-	//				try {
-	//					
-	//					bw.write(value);
-	//				} catch (IOException e) {
-	//					System.out.println("Couldn't write to file ");
-	//				}
-	//		
-	//
-	//			bw.close();
-	//		 
-	////		Map<String, String> data = new LinkedHashMap<String, String>();
-	////       data.put(fileName, value);
-	////       BufferedWriter bw = new BufferedWriter(new FileWriter(folderName+"\\"+fileName, false));
-	////       data.forEach((k, v) -> {
-	////           try {
-	////                  	
-	////           	
-	////               bw.write(k + "," + v+"\n");
-	////           } catch (IOException e) {
-	////              System.out.println("Couldn't write to file ");
-	////           }
-	////       });
-	////
-	////       bw.close();
-	//		
-	////		if(getValueFromData(keyId).equals("NOT FOUND"))
-	////			return "NOT-STORED\r\n";
-	////		else
-	////			return "STORED\\r\\n";
-	//		
-	//		return "Done";
-	//	}
 
 	public String writeDataToFile(String folderName ,String fileName ,String value) throws IOException {
-
+		 log.debug("Writing data to file");
 		File file = new File(folderName+"\\"+fileName);
 		boolean exists = file.exists();
 		if (!exists) {
@@ -172,11 +128,6 @@ public class KeyValueStore {
 
 
 		bw.close();
-
-		//		if(getValueFromData(keyId).equals("NOT FOUND"))
-		//			return "NOT-STORED\r\n";
-		//		else
-		//			return "STORED\\r\\n";
 
 		return "Done";
 	}

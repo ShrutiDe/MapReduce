@@ -58,12 +58,7 @@ public class Intermediator {
 	}
 
 	private static void combineFilesFromMapper(String fileName, int redNum, String reducerInputFolder, String intermediateInputFolder) throws IOException {
-
-		//		File file = new File(intermediateInputFolder+"\\"+fileName);
-		//
-		//		BufferedReader br = null;
-		//		br = new Intermediator().readFile(fileName,intermediateInputFolder);
-		BufferedReader fs = new Intermediator().readConfig();
+BufferedReader fs = new Intermediator().readConfig();
 
 
 		Properties props = new Properties();
@@ -96,10 +91,7 @@ public class Intermediator {
 		while(scanner.hasNextLine()) {
 
 			String[] datainput = scanner.nextLine().split(",");
-			//		String data=new String();
-			//		while((data=br.readLine())!=null) {
-			//			String[] datainput = data.split(",");
-			if (!datainput[0].equals("") && datainput.length>1 ) {
+		if (!datainput[0].equals("") && datainput.length>1 ) {
 				//try {
 					int hashValue = (datainput[0].charAt(0)-'a')%redNum;
 					String interName = Integer.toString(hashValue)+"Inter"+".json";
@@ -112,12 +104,6 @@ public class Intermediator {
 						map.put(interName, datainput[0] + "," + datainput[1]+"\n");
 					}
 
-					//					BufferedWriter bw = new BufferedWriter(new FileWriter(reducerInputFolder+"\\"+interName, true));
-					//					bw.write(datainput[0] + "," + datainput[1]+"\n");
-					//					bw.close();
-//				} catch (IOException e) {
-//					System.out.println("Couldn't write to file ");
-//				}
 			}
 		} 
 		

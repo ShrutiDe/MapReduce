@@ -23,7 +23,8 @@ public class CreateReducer extends Thread{
 			String server_url = "http://"+ReducerIp+":3389";
 			XmlRpcClient server = new XmlRpcClient(server_url);
 			Vector params = new Vector();
-			params.addElement(new String("Reducer"));
+			String master = ComputeEngineSample.getIP("master");
+			params.addElement(new String(master));
 			server.execute("sample.reducerMain", params);
 			
 
